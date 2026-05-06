@@ -22,7 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (currentUser) {
         // Evaluate if user is admin. Based on rules:
         // admin is mdsamirmolla87@gmail.com OR exists in admins DB
-        let isUserAdmin = currentUser.email === 'mdsamirmolla87@gmail.com';
+        let isUserAdmin = currentUser.email === 'mdsamirmolla87@gmail.com' || currentUser.email === 'parvejmolla100@gmail.com';
         
         if (!isUserAdmin) {
           try {
