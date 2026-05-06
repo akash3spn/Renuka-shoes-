@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'mdsamirmolla87@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'price', 'imageUrls', 'category', 'createdAt']) &&
+        data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
+        data.price is number && data.price >= 0 &&
+        data.imageUrls is list && data.imageUrls.size() > 0 && data.imageUrls.size() <= 10 &&
+        (data.imageUrls[0] is string) &&
+        data.category is string && data.category.size() <= 50 &&
+        data.createdAt is number &&
+        (data.get('description', '') is string) &&
+        (data.get('sizes', []) is list) &&
+        (data.get('brand', '') is string) &&
+        (data.get('stock', 0) is number) &&
+        (data.get('isFeatured', false) is bool) &&
+        (data.get('updatedAt', data.createdAt) is number);
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['customerName', 'phone', 'address', 'paymentMethod', 'items', 'totalAmount', 'status', 'createdAt']) &&
+        data.customerName is string && data.customerName.size() > 0 && data.customerName.size() <= 100 &&
+        data.phone is string && data.phone.size() > 0 && data.phone.size() <= 20 &&
+        data.address is string && data.address.size() > 0 && data.address.size() <= 1000 &&
+        data.paymentMethod is string && data.paymentMethod.matches('^(COD|bKash|Nagad)$') &&
+        data.items is list && data.items.size() > 0 && data.items.size() <= 50 &&
+        data.totalAmount is number && data.totalAmount >= 0 &&
+        data.status is string && data.status.matches('^(Pending|Processing|Shipped|Delivered|Cancelled)$') &&
+        data.createdAt is number &&
+        (data.get('customerId', '') is string);
+    }
+
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      allow update: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isAdmin() && isValidId(productId);
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin();
+      // Users can create orders anonymously or logged in
+      allow create: if isValidId(orderId) &&
+        isValidOrder(incoming()) &&
+        incoming().createdAt == request.time.toMillis() &&
+        incoming().status == 'Pending';
+      allow update: if isAdmin() && isValidId(orderId) && isValidOrder(incoming());
+      allow delete: if false; // orders shouldn't be deleted, just cancelled
+    }
+    
+    match /admins/{adminId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only modified directly in Firebase console
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

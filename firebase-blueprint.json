@@ -1,0 +1,73 @@
+{
+  "entities": {
+    "Product": {
+      "title": "Product",
+      "description": "A pair of shoes or related product in the store",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "imageUrls": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sizes": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "category": { "type": "string", "enum": ["Men", "Women", "Kids"] },
+        "brand": { "type": "string" },
+        "stock": { "type": "number" },
+        "isFeatured": { "type": "boolean" },
+        "createdAt": { "type": "integer" },
+        "updatedAt": { "type": "integer" }
+      },
+      "required": ["name", "price", "imageUrls", "category", "createdAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer order details",
+      "type": "object",
+      "properties": {
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "paymentMethod": { "type": "string", "enum": ["COD", "bKash", "Nagad"] },
+        "items": {
+          "type": "array",
+          "items": { "type": "object" }
+        },
+        "totalAmount": { "type": "number" },
+        "status": { "type": "string", "enum": ["Pending", "Processing", "Shipped", "Delivered", "Cancelled"] },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["customerName", "phone", "address", "paymentMethod", "items", "totalAmount", "status", "createdAt"]
+    },
+    "AdminConfig": {
+      "title": "Admin Config",
+      "description": "Storage for admin users list or settings",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "integer" }
+      },
+      "required": ["email", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Global list of all shoe products"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Customer orders, securely readable by admins, writable by users"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminConfig" },
+      "description": "Documents identifying administrative users by UID."
+    }
+  }
+}
