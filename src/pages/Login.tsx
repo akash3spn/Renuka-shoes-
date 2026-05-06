@@ -25,9 +25,13 @@ export default function Login() {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
       navigate('/');
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      alert('Failed to sign in with Google');
+      if (error?.code === 'auth/unauthorized-domain') {
+        alert('Action Required: You must add "shoes.vercel.app" to your Authorized Domains in the Firebase Console (Authentication -> Settings -> Authorized Domains).');
+      } else {
+        alert(`Failed to sign in with Google: ${error?.message || 'Unknown error'}`);
+      }
     } finally {
       setLoading(false);
     }
