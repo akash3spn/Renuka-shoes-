@@ -9,6 +9,7 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -88,9 +89,30 @@ export default function AdminProducts() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm('Are you sure you want to delete this product?')) {
-      await deleteDoc(doc(db, 'products', id));
-      fetchProducts();
+    if (!id) {
+      alert('Error: Product ID is missing.');
+      return;
+    }
+    
+    if (deletingId) return; // Prevent double-click
+
+    if (window.confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+      setDeletingId(id);
+      try {
+        await deleteDoc(doc(db, 'products', id));
+        // Real-time update UI without fully reloading from server, but we can also just fetch
+        setProducts(prev => prev.filter(p => p.id !== id));
+        alert('Product deleted successfully');
+      } catch (error: any) {
+        console.error(error);
+        if (error.code === 'permission-denied') {
+          alert('Error: You do not have permission to delete products (Admin only).');
+        } else {
+          alert('Error: Failed to delete product.');
+        }
+      } finally {
+        setDeletingId(null);
+      }
     }
   };
 
@@ -137,8 +159,16 @@ export default function AdminProducts() {
                   <button onClick={() => handleEdit(product)} className="text-neutral-500 hover:text-black">
                     <Edit size={16} />
                   </button>
-                  <button onClick={() => handleDelete(product.id)} className="text-red-500 hover:text-red-700">
-                    <Trash2 size={16} />
+                  <button 
+                    onClick={() => handleDelete(product.id)} 
+                    disabled={deletingId === product.id}
+                    className={`hover:text-red-700 ${deletingId === product.id ? 'text-neutral-400 cursor-not-allowed' : 'text-red-500'}`}
+                  >
+                    {deletingId === product.id ? (
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
                   </button>
                 </td>
               </tr>
