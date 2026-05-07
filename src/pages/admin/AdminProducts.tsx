@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { db } from '../../lib/firebase';
+import { db, storage } from '../../lib/firebase';
 import { collection, getDocs, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { formatPrice } from '../../lib/utils';
 import { Plus, Trash2, Edit } from 'lucide-react';
 
@@ -10,6 +11,9 @@ export default function AdminProducts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [savingStatus, setSavingStatus] = useState<string>('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -44,13 +48,30 @@ export default function AdminProducts() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setSavingStatus('Preparing...');
+      let finalImageUrl = formData.imageUrl;
+
+      if (imageFile) {
+        setSavingStatus('Uploading Image...');
+        const imageRef = ref(storage, `products/${Date.now()}_${imageFile.name}`);
+        const snapshot = await uploadBytes(imageRef, imageFile);
+        finalImageUrl = await getDownloadURL(snapshot.ref);
+      }
+
+      if (!finalImageUrl) {
+        alert("Please select a product image.");
+        setSavingStatus('');
+        return;
+      }
+
+      setSavingStatus('Saving Product...');
       const payload = {
         name: formData.name,
         price: parseFloat(formData.price),
         description: formData.description,
         category: formData.category,
         brand: formData.brand,
-        imageUrls: [formData.imageUrl],
+        imageUrls: [finalImageUrl],
         sizes: formData.sizes.split(',').map(s => s.trim()),
         isFeatured: formData.isFeatured,
         createdAt: editingId ? products.find(p => p.id === editingId)?.createdAt : Date.now(),
@@ -65,16 +86,21 @@ export default function AdminProducts() {
       
       setIsModalOpen(false);
       setEditingId(null);
+      setImageFile(null);
+      setSavingStatus('');
       setFormData({ name: '', price: '', description: '', category: 'Men', brand: '', imageUrl: '', sizes: '40,41,42,43,44', isFeatured: false });
       fetchProducts();
     } catch (error) {
       console.error(error);
-      alert('Error saving product');
+      alert('Error saving product: ' + (error as any).message);
+      setSavingStatus('');
     }
   };
 
   const handleEdit = (product: any) => {
     setEditingId(product.id);
+    setImageFile(null);
+    setSavingStatus('');
     setFormData({
       name: product.name,
       price: product.price.toString(),
@@ -212,8 +238,24 @@ export default function AdminProducts() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase mb-1">Image URL</label>
-                <input required type="url" name="imageUrl" value={formData.imageUrl} onChange={handleInputChange} className="w-full border p-2 rounded-sm" />
+                <label className="block text-xs font-bold uppercase mb-1">Product Image</label>
+                <div className="flex items-center space-x-4">
+                  {(imageFile || formData.imageUrl) && (
+                    <div className="w-16 h-16 border rounded-sm bg-neutral-100 overflow-hidden shrink-0">
+                      <img src={imageFile ? URL.createObjectURL(imageFile) : formData.imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setImageFile(e.target.files[0]);
+                      }
+                    }} 
+                    className="w-full text-sm text-neutral-500 file:mr-4 file:py-2 file:px-4 file:rounded-sm file:border-0 file:text-sm file:font-bold file:uppercase file:tracking-wider file:bg-black file:text-white hover:file:bg-neutral-800 transition-colors"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-bold uppercase mb-1">Description</label>
@@ -224,8 +266,10 @@ export default function AdminProducts() {
                 <label htmlFor="isFeatured" className="text-sm font-bold uppercase">Featured Product (Show on Homepage)</label>
               </div>
               <div className="flex space-x-3 pt-4">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-2 font-bold uppercase tracking-wider bg-neutral-200 hover:bg-neutral-300 transition-colors rounded-sm">Cancel</button>
-                <button type="submit" className="flex-1 py-2 font-bold uppercase tracking-wider bg-black text-white hover:bg-red-600 transition-colors rounded-sm">Save Product</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 py-3 font-bold uppercase tracking-wider bg-neutral-200 hover:bg-neutral-300 transition-colors rounded-sm text-sm">Cancel</button>
+                <button type="submit" disabled={!!savingStatus} className="flex-1 py-3 font-bold uppercase tracking-wider bg-black text-white hover:bg-red-600 transition-colors rounded-sm text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                  {savingStatus || 'Save Product'}
+                </button>
               </div>
             </form>
           </div>
