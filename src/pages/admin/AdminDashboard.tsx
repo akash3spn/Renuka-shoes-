@@ -97,33 +97,51 @@ export default function AdminDashboard() {
 
       {/* Sidebar */}
       <aside className={cn(
-        "bg-white border-r border-neutral-200 flex-shrink-0 transition-all duration-300 z-20",
+        "bg-white border-r border-neutral-200 flex-shrink-0 transition-all duration-300 z-20 flex flex-col",
         "md:w-64 md:block absolute md:static top-[145px] md:top-auto bottom-0 w-full overflow-y-auto min-h-[calc(100dvh-145px)] md:min-h-0",
         mobileMenuOpen ? "block left-0" : "hidden md:block"
       )}>
-        <div className="p-6 border-b border-neutral-200 hidden md:block">
-          <h2 className="text-sm font-black uppercase tracking-wider text-red-600 flex items-center space-x-2">
-            <Settings size={18} />
-            <span>Admin Panel</span>
-          </h2>
+        <div className="flex-1">
+          <div className="p-6 border-b border-neutral-200 hidden md:block">
+            <h2 className="text-sm font-black uppercase tracking-wider text-red-600 flex items-center space-x-2">
+              <Settings size={18} />
+              <span>Admin Panel</span>
+            </h2>
+          </div>
+          <nav className="p-4 space-y-2">
+            {navItems.map(item => (
+              <Link
+                key={item.name}
+                to={item.path}
+                className={cn(
+                  "flex items-center space-x-3 px-4 py-3 rounded-sm font-medium transition-colors text-sm",
+                  (location.pathname === item.path || (item.path === '/admin' && location.pathname === '/admin/'))
+                    ? "bg-neutral-900 text-white" 
+                    : "text-neutral-600 hover:bg-neutral-100 hover:text-black"
+                )}
+              >
+                <item.icon size={18} />
+                <span>{item.name}</span>
+              </Link>
+            ))}
+          </nav>
         </div>
-        <nav className="p-4 space-y-2">
-          {navItems.map(item => (
-            <Link
-              key={item.name}
-              to={item.path}
-              className={cn(
-                "flex items-center space-x-3 px-4 py-3 rounded-sm font-medium transition-colors text-sm",
-                (location.pathname === item.path || (item.path === '/admin' && location.pathname === '/admin/'))
-                  ? "bg-neutral-900 text-white" 
-                  : "text-neutral-600 hover:bg-neutral-100 hover:text-black"
-              )}
-            >
-              <item.icon size={18} />
-              <span>{item.name}</span>
-            </Link>
-          ))}
-        </nav>
+        
+        <div className="p-4 border-t border-neutral-200">
+          <button 
+            onClick={() => {
+              import('firebase/auth').then(({ signOut }) => signOut(auth));
+            }}
+            className="flex w-full items-center space-x-3 px-4 py-3 rounded-sm font-medium transition-colors text-sm text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            <span>Sign Out</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content */}
