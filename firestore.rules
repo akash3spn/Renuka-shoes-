@@ -67,7 +67,7 @@ service cloud.firestore {
     }
     
     match /admins/{adminId} {
-      allow read: if isAdmin();
+      allow read: if request.auth != null && request.auth.uid == adminId;
       allow write: if false; // Only modified directly in Firebase console
     }
 

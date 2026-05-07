@@ -5,15 +5,16 @@ import AdminOverview from './AdminOverview';
 import AdminProducts from './AdminProducts';
 import AdminOrders from './AdminOrders';
 import AdminSettings from './AdminSettings';
-import { Package, ShoppingCart, LayoutDashboard, Settings, Sliders, Bell } from 'lucide-react';
+import { Package, ShoppingCart, LayoutDashboard, Settings, Sliders, Bell, Menu, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { collection, query, orderBy, limit, onSnapshot, where } from 'firebase/firestore';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { db } from '../../lib/firebase';
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const location = useLocation();
   const [notifications, setNotifications] = useState<string[]>([]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   useEffect(() => {
     if (!isAdmin) return;
@@ -44,6 +45,11 @@ export default function AdminDashboard() {
     return () => unsubscribe();
   }, [isAdmin]);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [location]);
+
   if (loading) return <div className="p-24 text-center">Loading Admin...</div>;
   
   if (!user) {
@@ -62,7 +68,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-80px)] mt-20 bg-neutral-100">
+    <div className="flex min-h-[calc(100vh-80px)] min-h-[calc(100dvh-80px)] mt-20 bg-neutral-100 flex-col md:flex-row">
       {/* Notifications Toast */}
       {notifications.length > 0 && (
          <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2">
@@ -75,9 +81,27 @@ export default function AdminDashboard() {
          </div>
       )}
 
+      {/* Mobile Top Bar */}
+      <div className="md:hidden flex items-center justify-between bg-white p-4 border-b border-neutral-200 sticky top-20 z-30">
+        <h2 className="text-sm font-black uppercase tracking-wider text-red-600 flex items-center space-x-2">
+          <Settings size={18} />
+          <span>Admin Panel</span>
+        </h2>
+        <button 
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="p-2 -mr-2 text-neutral-600 hover:text-black focus:outline-none"
+        >
+          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-neutral-200 hidden md:block flex-shrink-0 min-h-[calc(100vh-80px)]">
-        <div className="p-6 border-b border-neutral-200">
+      <aside className={cn(
+        "bg-white border-r border-neutral-200 flex-shrink-0 transition-all duration-300 z-20",
+        "md:w-64 md:block absolute md:static top-[145px] md:top-auto bottom-0 w-full overflow-y-auto min-h-[calc(100dvh-145px)] md:min-h-0",
+        mobileMenuOpen ? "block left-0" : "hidden md:block"
+      )}>
+        <div className="p-6 border-b border-neutral-200 hidden md:block">
           <h2 className="text-sm font-black uppercase tracking-wider text-red-600 flex items-center space-x-2">
             <Settings size={18} />
             <span>Admin Panel</span>
@@ -103,8 +127,8 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-8">
+      <div className="flex-1 overflow-auto bg-neutral-100 w-full max-w-full">
+        <div className="p-4 md:p-8 w-full max-w-full overflow-x-hidden">
           <Routes>
             <Route index element={<AdminOverview />} />
             <Route path="products" element={<AdminProducts />} />
