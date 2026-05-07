@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Facebook, MapPin, Phone, Instagram } from 'lucide-react';
+import { TikTok } from '../icons/TikTok';
 
 export function Footer() {
   return (
@@ -48,13 +49,28 @@ export function Footer() {
                 <span>+880 1750-694979</span>
               </li>
             </ul>
-            <div className="mt-6 flex space-x-4">
-              <a href="#" className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center hover:bg-red-600 transition-colors">
-                <Facebook size={18} />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center hover:bg-red-600 transition-colors">
-                <Instagram size={18} />
-              </a>
+            <div className="mt-8">
+              <h4 className="font-bold uppercase tracking-wider mb-4 text-sm text-white border-b border-neutral-900 pb-2">Follow Us</h4>
+              <div className="flex space-x-4">
+                <a 
+                  href="https://www.facebook.com/share/17WGUF6ZNG/?mibextid=wwXIfr" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center hover:bg-red-600 hover:scale-110 transition-all duration-300 text-white shadow-md relative"
+                  aria-label="Follow us on Facebook"
+                >
+                  <Facebook size={18} />
+                </a>
+                <a 
+                  href="https://www.tiktok.com/@renukashoesgopalgonj" 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="w-10 h-10 rounded-full bg-neutral-900 flex items-center justify-center hover:bg-red-600 hover:scale-110 transition-all duration-300 text-white shadow-md relative"
+                  aria-label="Follow us on TikTok"
+                >
+                  <TikTok size={18} />
+                </a>
+              </div>
             </div>
           </div>
         </div>

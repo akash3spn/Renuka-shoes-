@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { auth } from '../lib/firebase';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -9,22 +9,23 @@ export default function Login() {
   const { user, isAdmin } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect
-  if (user) {
-    if (isAdmin) {
-      navigate('/admin');
-    } else {
-      navigate('/');
+  useEffect(() => {
+    // If auth state is verified and user is logged in, redirect
+    if (user && !loading) {
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     }
-    return null;
-  }
+  }, [user, isAdmin, navigate, loading]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-      navigate('/');
+      // Removed immediate navigate to ensure isAdmin rules evaluate first before useEffect fires
     } catch (error: any) {
       console.error(error);
       if (error?.code === 'auth/unauthorized-domain') {
