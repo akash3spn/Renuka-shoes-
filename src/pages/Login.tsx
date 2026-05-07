@@ -14,25 +14,41 @@ export default function Login() {
 
   useEffect(() => {
     // If auth state is verified and user is logged in, redirect
-    if (user && !loading) {
+    if (user) {
       if (isAdmin) {
         navigate('/admin');
       } else {
         navigate('/');
       }
     }
-  }, [user, isAdmin, navigate, loading]);
+  }, [user, isAdmin, navigate]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent double submission
+    
     setLoading(true);
     setErrorMsg('');
     
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // Wait for useEffect to redirect
+      // Create a timeout promise to prevent hanging indefinitely
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('timeout')), 15000)
+      );
+      
+      await Promise.race([
+        signInWithEmailAndPassword(auth, email, password),
+        timeoutPromise
+      ]);
+      // Success: useEffect will handle the redirect once onAuthStateChanged fires
     } catch (error: any) {
-      console.error(error);
+      console.error('Login error:', error);
+      
+      if (error.message === 'timeout') {
+         setErrorMsg('Network timeout. Please check your internet connection and try again.');
+         setLoading(false);
+         return;
+      }
       
       // Auto-create admin if the account hasn't been set up yet, to make it seamless
       if (email === 'mdsamirmolla87@gmail.com' && error.code === 'auth/invalid-credential') {
@@ -40,6 +56,7 @@ export default function Login() {
           await createUserWithEmailAndPassword(auth, email, password);
           return; // Success, user will be redirected by useEffect
         } catch (createError: any) {
+          setLoading(false);
           if (createError.code === 'auth/email-already-in-use') {
             setErrorMsg('Invalid password for admin account.');
           } else {
@@ -47,15 +64,14 @@ export default function Login() {
           }
         }
       } else {
+        setLoading(false);
         // Normal error handling
         switch (error.code) {
           case 'auth/invalid-credential':
-            setErrorMsg('Invalid email or password. Please try again.');
-            break;
           case 'auth/user-not-found':
           case 'auth/wrong-password':
-             setErrorMsg('Invalid email or password.');
-             break;
+            setErrorMsg('Invalid email or password.');
+            break;
           case 'auth/too-many-requests':
             setErrorMsg('Account temporarily disabled due to many failed attempts. Try again later.');
             break;
@@ -65,13 +81,6 @@ export default function Login() {
           default:
             setErrorMsg(error.message || 'Failed to sign in.');
         }
-      }
-    } finally {
-      if (email !== 'mdsamirmolla87@gmail.com') {
-        setLoading(false);
-      } else {
-        // Let component unmount handle loading state clearing on seamless admin auth
-        setTimeout(() => setLoading(false), 2000); 
       }
     }
   };

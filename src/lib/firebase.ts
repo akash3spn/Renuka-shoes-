@@ -16,12 +16,25 @@ let firebaseConfig = {
 
 // Fallback for local AI Studio environment
 if (!firebaseConfig.apiKey) {
-  // We use import.meta.glob so the Vercel build doesn't fail if the file is missing
-  const localConfigs = import.meta.glob('../../firebase-applet-config.json', { eager: true });
-  if (localConfigs['../../firebase-applet-config.json']) {
-    const config = localConfigs['../../firebase-applet-config.json'] as any;
-    firebaseConfig = config.default || config;
+  try {
+    // We use import.meta.glob so the Vercel build doesn't fail if the file is missing
+    const localConfigs = import.meta.glob('../../firebase-applet-config.json', { eager: true });
+    if (localConfigs['../../firebase-applet-config.json']) {
+      const config = localConfigs['../../firebase-applet-config.json'] as any;
+      firebaseConfig = config.default || config;
+    }
+  } catch (e) {
+    console.warn("Could not load local firebase config fallback.");
   }
+}
+
+if (!firebaseConfig.apiKey) {
+  console.error(
+    "🔥 FIREBASE CONFIGURATION ERROR: \n" +
+    "Missing VITE_FIREBASE_API_KEY environment variable. \n" +
+    "If you are deploying to Vercel, make sure you have added all VITE_FIREBASE_* variables in your Vercel Project Settings -> Environment Variables. \n" +
+    "Your authentication will NOT work without these."
+  );
 }
 
 const app = initializeApp(firebaseConfig);

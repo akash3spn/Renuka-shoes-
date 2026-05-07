@@ -18,7 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
         // Evaluate if user is admin. Based on rules:
         // admin is mdsamirmolla87@gmail.com OR exists in admins DB
@@ -35,8 +34,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
         setIsAdmin(isUserAdmin);
+        setUser(currentUser);
       } else {
         setIsAdmin(false);
+        setUser(null);
       }
       setLoading(false);
     });
