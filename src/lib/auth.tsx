@@ -20,19 +20,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         // Evaluate if user is admin. Based on rules:
-        // admin is mdsamirmolla87@gmail.com OR exists in admins DB
+        // admin is mdsamirmolla87@gmail.com
         let isUserAdmin = currentUser.email === 'mdsamirmolla87@gmail.com';
         
-        if (!isUserAdmin) {
-          try {
-            const adminDoc = await getDoc(doc(db, 'admins', currentUser.uid));
-            if (adminDoc.exists()) {
-              isUserAdmin = true;
-            }
-          } catch (e) {
-            console.error(e);
-          }
-        }
         setIsAdmin(isUserAdmin);
         setUser(currentUser);
       } else {
