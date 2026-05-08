@@ -4,14 +4,16 @@ import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import firebaseConfigJson from '../../firebase-applet-config.json';
 
+const isEnvValid = import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_API_KEY !== 'your_api_key' && import.meta.env.VITE_FIREBASE_API_KEY.length > 10 && !import.meta.env.VITE_FIREBASE_API_KEY.includes('your');
+
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || firebaseConfigJson.apiKey,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || firebaseConfigJson.authDomain,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || firebaseConfigJson.projectId,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || firebaseConfigJson.storageBucket,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || firebaseConfigJson.messagingSenderId,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || firebaseConfigJson.appId,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfigJson.firestoreDatabaseId,
+  apiKey: isEnvValid ? import.meta.env.VITE_FIREBASE_API_KEY : firebaseConfigJson.apiKey,
+  authDomain: isEnvValid ? import.meta.env.VITE_FIREBASE_AUTH_DOMAIN : firebaseConfigJson.authDomain,
+  projectId: isEnvValid ? import.meta.env.VITE_FIREBASE_PROJECT_ID : firebaseConfigJson.projectId,
+  storageBucket: isEnvValid ? import.meta.env.VITE_FIREBASE_STORAGE_BUCKET : firebaseConfigJson.storageBucket,
+  messagingSenderId: isEnvValid ? import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID : firebaseConfigJson.messagingSenderId,
+  appId: isEnvValid ? import.meta.env.VITE_FIREBASE_APP_ID : firebaseConfigJson.appId,
+  firestoreDatabaseId: isEnvValid ? import.meta.env.VITE_FIREBASE_DATABASE_ID : firebaseConfigJson.firestoreDatabaseId,
 };
 
 const app = initializeApp(firebaseConfig);
